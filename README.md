@@ -110,6 +110,38 @@ The key metrics tracked across all outputs are:
 - **State transitions** - percentage breakdown of how agents moved between states (neutral -> infected, neutral -> vaccinated, infected -> vaccinated, vaccinated -> infected)
 - **Cycle and message stats** - total simulation cycles, average messages per cycle, and the share of messages posted by infected vs. vaccinated agents
 
+### Message Volume: Total vs. Per-Cycle
+
+The paper reports that the LLM-only model produces "roughly three orders of magnitude more messages per cycle" than the NeSy model. This refers specifically to the per-cycle rate, not the total number of messages posted over a run. The two are driven by different things: the NeSy model's `P_read` gate makes it run far more cycles before an idle-agent stopping condition is met, while the LLM-only agent replies to nearly everything it reads and therefore hits the same stopping condition after only tens or hundreds of cycles. As a result, total message counts across the two models are much closer than the per-cycle rates suggest.
+
+Values below pool all 3 threads x 3 runs per configuration (n=9 per cell).
+
+**Total messages** (mean ± std across runs and threads):
+
+| Condition        | NeSy (600)       | LLM-only (600-llm) | Ratio |
+|-------------------|-----------------:|--------------------:|------:|
+| Baseline          | 658.9 ± 222.2    | 4215.1 ± 1344.4     | 6.4×  |
+| 25% Cautious      | 524.3 ± 182.8    | 4504.7 ± 1842.3     | 8.6×  |
+| 50% Cautious      | 489.1 ± 216.1    | 4395.1 ± 1481.9     | 9.0×  |
+| 75% Cautious      | 464.8 ± 84.4     | 5305.3 ± 1782.2     | 11.4× |
+| 25% Credulous     | 614.8 ± 158.0    | 4140.8 ± 1331.0     | 6.7×  |
+| 50% Credulous     | 722.7 ± 226.3    | 4760.7 ± 1966.8     | 6.6×  |
+| 75% Credulous     | 706.4 ± 198.5    | 4781.8 ± 1655.1     | 6.8×  |
+
+**Messages per cycle** (per-run ratio of total messages to cycles-to-termination, then averaged):
+
+| Condition        | NeSy msgs/cycle | LLM-only msgs/cycle | Ratio  |
+|-------------------|----------------:|---------------------:|-------:|
+| Baseline          | 0.273           | 92.70                | 339×   |
+| 25% Cautious      | 0.117           | 115.93               | 992×   |
+| 50% Cautious      | 0.115           | 144.15               | 1253×  |
+| 75% Cautious      | 0.097           | 153.05               | 1587×  |
+| 25% Credulous     | 0.127           | 78.75                | 622×   |
+| 50% Credulous     | 0.341           | 65.05                | 191×   |
+| 75% Credulous     | 0.393           | 219.14               | 558×   |
+
+The per-cycle ratio ranges from roughly 190× to 1600× across configurations, averaging in the low hundreds to low thousands. Given the substantial spread across threads and runs (reflected in the std values above), we present this as an approximate, descriptive comparison rather than a precisely quantified effect; `total_messages` is not included among the metrics tested for significance in `results_pooled_delta.csv`. Mean cycles-to-termination for each configuration are reported in `results.csv` (`max_cycles_mean`) and `results_per_run.csv`.
+
 ## Plots
 
 Plots are located inside `plots` and organized into three subdirectories. Each plot is produced per thread as well as for an aggregate "all threads" view (mean across threads). Bars show mean ± std across runs, with individual run values overlaid as jitter points when per-run data is available. Significance stars are drawn at the outer end of each bar using pooled p-values from `results_pooled_delta.csv`.
